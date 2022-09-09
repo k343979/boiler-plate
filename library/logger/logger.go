@@ -10,7 +10,7 @@ var Log log.LoggerInterface
 // Set
 // loggerの初期設定
 func Set() {
-	logger, err := log.LoggerFromConfigAsFile("log.xml")
+	logger, err := log.LoggerFromConfigAsFile("/go/src/github.com/boiler-plate/log.xml")
 	if err != nil {
 		panic(err)
 	}
