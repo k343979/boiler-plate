@@ -33,6 +33,12 @@ type Remind struct {
 	Info   *Info   // メール基本情報
 }
 
+// お知らせ配信用構造体
+type Notification struct {
+	Client *Client // API通信用クライアント
+	Info   *Info   // メール基本情報
+}
+
 // メールインターフェース
 type Mail interface {
 	Send(context.Context) error // メール送信処理
@@ -53,14 +59,14 @@ func NewTarget(name, email string) *Target {
 // NewTest
 // Test構造体をMailインターフェースで生成
 // return Mailインターフェース
-func (t *Target) NewTest() Mail {
+func (t *Target) NewTest(subject, html, plain string) Mail {
 	return &Test{
 		Client: NewClient(),
 		Info: &Info{
 			Target:    t,
-			Subject:   "テストメール",
-			PathHtml:  "/go/src/github.com/boiler-plate/api/sendgrid/template/testmail/text.html",
-			PathPlain: "/go/src/github.com/boiler-plate/api/sendgrid/template/testmail",
+			Subject:   subject,
+			PathHtml:  html,
+			PathPlain: plain,
 		},
 	}
 }
@@ -68,14 +74,29 @@ func (t *Target) NewTest() Mail {
 // NewRemind
 // Remind構造体をMailインターフェースで生成
 // return Mailインターフェース
-func (t *Target) NewRemind() Mail {
+func (t *Target) NewRemind(subject, html, plain string) Mail {
 	return &Remind{
 		Client: NewClient(),
 		Info: &Info{
 			Target:    t,
-			Subject:   "リマインドメール",
-			PathHtml:  "/go/src/github.com/boiler-plate/api/sendgrid/template/remind/text.html",
-			PathPlain: "/go/src/github.com/boiler-plate/api/sendgrid/template/remind",
+			Subject:   subject,
+			PathHtml:  html,
+			PathPlain: plain,
+		},
+	}
+}
+
+// NewRemind
+// Remind構造体をMailインターフェースで生成
+// return Mailインターフェース
+func (t *Target) NewNotification(subject, html, plain string) Mail {
+	return &Notification{
+		Client: NewClient(),
+		Info: &Info{
+			Target:    t,
+			Subject:   subject,
+			PathHtml:  html,
+			PathPlain: plain,
 		},
 	}
 }
@@ -118,6 +139,38 @@ func (t *Test) Send(ctx context.Context) error {
 // return エラー情報
 func (r *Remind) Send(ctx context.Context) error {
 	c, info := r.Client, r.Info
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
+	// バッチIDを生成
+	batchID, err := c.CreateBatchID(ctx)
+	if err != nil {
+		return err
+	}
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
+	// batchIDの有効チェック
+	if err := c.ValidateBatchID(ctx, batchID); err != nil {
+		return err
+	}
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
+
+	// メール情報を組立
+	reqBody := info.Build(batchID)
+
+	// メール送信
+	return c.Send(ctx, reqBody)
+}
+
+// (n *Notification) Send
+// お知らせ配信処理
+// param ctx : コンテキスト
+// return エラー情報
+func (n *Notification) Send(ctx context.Context) error {
+	c, info := n.Client, n.Info
 
 	// キャンセルの確認
 	checkcancel.Exec(ctx)
