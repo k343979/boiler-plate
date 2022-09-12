@@ -118,16 +118,24 @@ func (t *Test) Send(ctx context.Context) error {
 // return エラー情報
 func (r *Remind) Send(ctx context.Context) error {
 	c, info := r.Client, r.Info
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
 	// バッチIDを生成
 	batchID, err := c.CreateBatchID(ctx)
 	if err != nil {
 		return err
 	}
 
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
 	// batchIDの有効チェック
 	if err := c.ValidateBatchID(ctx, batchID); err != nil {
 		return err
 	}
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
 
 	// メール情報を組立
 	reqBody := info.Build(batchID)
