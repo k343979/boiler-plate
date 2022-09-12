@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/boiler-plate/library/logger"
+	"github.com/boiler-plate/tools/logger"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 

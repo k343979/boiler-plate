@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/boiler-plate/library/logger"
+	"github.com/boiler-plate/tools/logger"
 )
 
 // CreateBatchIDのレスポンス格納用構造体
