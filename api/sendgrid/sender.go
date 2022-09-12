@@ -41,8 +41,14 @@ type Notification struct {
 
 // パスワードリセット配信用構造体
 type PassReset struct {
-	Client *Client
-	Info   *Info
+	Client *Client // API通信用クライアント
+	Info   *Info   // メール基本情報
+}
+
+// 認証メール配信用構造体
+type Verification struct {
+	Client *Client // API通信用クライアント
+	Info   *Info   // メール基本情報
 }
 
 // メールインターフェース
@@ -124,6 +130,24 @@ func (t *Target) NewNotification(subject, html, plain string) Mail {
 // return Mailインターフェース
 func (t *Target) NewPassReset(subject, html, plain string) Mail {
 	return &PassReset{
+		Client: NewClient(),
+		Info: &Info{
+			Target:    t,
+			Subject:   subject,
+			PathHtml:  html,
+			PathPlain: plain,
+		},
+	}
+}
+
+// NewVerification
+// Verification構造体をMailインターフェースで生成
+// param subject : メール件名
+// param html : HTMLメールテンプレートのパス
+// param plain : テキストメールテンプレートのパス
+// return Mailインターフェース
+func (t *Target) NewVerification(subject, html, plain string) Mail {
+	return &Verification{
 		Client: NewClient(),
 		Info: &Info{
 			Target:    t,
@@ -236,6 +260,38 @@ func (n *Notification) Send(ctx context.Context) error {
 // return エラー情報
 func (ps *PassReset) Send(ctx context.Context) error {
 	c, info := ps.Client, ps.Info
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
+	// バッチIDを生成
+	batchID, err := c.CreateBatchID(ctx)
+	if err != nil {
+		return err
+	}
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
+	// batchIDの有効チェック
+	if err := c.ValidateBatchID(ctx, batchID); err != nil {
+		return err
+	}
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
+
+	// メール情報を組立
+	reqBody := info.Build(batchID)
+
+	// メール送信
+	return c.Send(ctx, reqBody)
+}
+
+// (v *Verification) Send
+// 認証メール配信処理
+// param ctx : コンテキスト
+// return エラー情報
+func (v *Verification) Send(ctx context.Context) error {
+	c, info := v.Client, v.Info
 
 	// キャンセルの確認
 	checkcancel.Exec(ctx)
