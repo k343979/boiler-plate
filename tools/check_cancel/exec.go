@@ -7,11 +7,11 @@ import (
 	"github.com/boiler-plate/tools/logger"
 )
 
-// CheckCancel
+// Exec
 // キャンセルの確認
 // param ctx : コンテキスト
 // return エラー情報
-func CheckCancel(ctx context.Context) error {
+func Exec(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		_ = logger.Log.Errorf("context was canceled")
