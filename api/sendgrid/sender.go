@@ -3,6 +3,8 @@ package sendgrid
 
 import (
 	"context"
+
+	checkcancel "github.com/boiler-plate/tools/check_cancel"
 )
 
 // 送信対象情報
@@ -63,16 +65,24 @@ func (t *Target) NewTest(subject, html, plain string) Mail {
 // return エラー情報
 func (t *Test) Send(ctx context.Context) error {
 	c, info := t.Client, t.Info
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
 	// バッチIDを生成
 	batchID, err := c.CreateBatchID(ctx)
 	if err != nil {
 		return err
 	}
 
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
 	// batchIDの有効チェック
 	if err := c.ValidateBatchID(ctx, batchID); err != nil {
 		return err
 	}
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
 
 	// メール情報を組立
 	reqBody := info.Build(batchID)
