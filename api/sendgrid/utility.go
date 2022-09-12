@@ -64,6 +64,6 @@ func (info *Info) SetConv(p *mail.Personalization) {
 	p.SetSubstitution("{%name%}", t.Name)
 	p.SetSubstitution("{%email%}", t.Email)
 	p.SetSubstitution("{%url%}", "")
-	p.SetSubstitution("{%reset_pass_url%}", "")
+	p.SetSubstitution("{%pass_reset_url%}", "")
 	p.SetSubstitution("{%unsubscribe_url%}", "")
 }
