@@ -39,6 +39,12 @@ type Notification struct {
 	Info   *Info   // メール基本情報
 }
 
+// パスワードリセット配信用構造体
+type PassReset struct {
+	Client *Client
+	Info   *Info
+}
+
 // メールインターフェース
 type Mail interface {
 	Send(context.Context) error // メール送信処理
@@ -58,6 +64,9 @@ func NewTarget(name, email string) *Target {
 
 // NewTest
 // Test構造体をMailインターフェースで生成
+// param subject : メール件名
+// param html : HTMLメールテンプレートのパス
+// param plain : テキストメールテンプレートのパス
 // return Mailインターフェース
 func (t *Target) NewTest(subject, html, plain string) Mail {
 	return &Test{
@@ -73,6 +82,9 @@ func (t *Target) NewTest(subject, html, plain string) Mail {
 
 // NewRemind
 // Remind構造体をMailインターフェースで生成
+// param subject : メール件名
+// param html : HTMLメールテンプレートのパス
+// param plain : テキストメールテンプレートのパス
 // return Mailインターフェース
 func (t *Target) NewRemind(subject, html, plain string) Mail {
 	return &Remind{
@@ -86,11 +98,32 @@ func (t *Target) NewRemind(subject, html, plain string) Mail {
 	}
 }
 
-// NewRemind
-// Remind構造体をMailインターフェースで生成
+// NewNotification
+// Notification構造体をMailインターフェースで生成
+// param subject : メール件名
+// param html : HTMLメールテンプレートのパス
+// param plain : テキストメールテンプレートのパス
 // return Mailインターフェース
 func (t *Target) NewNotification(subject, html, plain string) Mail {
 	return &Notification{
+		Client: NewClient(),
+		Info: &Info{
+			Target:    t,
+			Subject:   subject,
+			PathHtml:  html,
+			PathPlain: plain,
+		},
+	}
+}
+
+// NewPassReset
+// PassReset構造体をMailインターフェースで生成
+// param subject : メール件名
+// param html : HTMLメールテンプレートのパス
+// param plain : テキストメールテンプレートのパス
+// return Mailインターフェース
+func (t *Target) NewPassReset(subject, html, plain string) Mail {
+	return &PassReset{
 		Client: NewClient(),
 		Info: &Info{
 			Target:    t,
@@ -171,6 +204,38 @@ func (r *Remind) Send(ctx context.Context) error {
 // return エラー情報
 func (n *Notification) Send(ctx context.Context) error {
 	c, info := n.Client, n.Info
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
+	// バッチIDを生成
+	batchID, err := c.CreateBatchID(ctx)
+	if err != nil {
+		return err
+	}
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
+	// batchIDの有効チェック
+	if err := c.ValidateBatchID(ctx, batchID); err != nil {
+		return err
+	}
+
+	// キャンセルの確認
+	checkcancel.Exec(ctx)
+
+	// メール情報を組立
+	reqBody := info.Build(batchID)
+
+	// メール送信
+	return c.Send(ctx, reqBody)
+}
+
+// (ps *PassReset) Send
+// パスワードリセット配信処理
+// param ctx : コンテキスト
+// return エラー情報
+func (ps *PassReset) Send(ctx context.Context) error {
+	c, info := ps.Client, ps.Info
 
 	// キャンセルの確認
 	checkcancel.Exec(ctx)
