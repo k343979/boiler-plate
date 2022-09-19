@@ -8,6 +8,7 @@ import (
 	g "golang.org/x/oauth2/google"
 )
 
+// API通信用クライアント
 type Client struct {
 	ClientID     string
 	ClientSecret string
@@ -15,6 +16,8 @@ type Client struct {
 	EndPoint     oauth2.Endpoint
 }
 
+// API通信用クライアント構造体を生成
+// return *Client
 func NewClient() *Client {
 	return &Client{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
