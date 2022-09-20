@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"golang.org/x/oauth2"
-	g "golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/google"
 )
 
 // API通信用クライアント
@@ -23,6 +23,6 @@ func NewClient() *Client {
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 		RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
-		EndPoint:     g.Endpoint,
+		EndPoint:     google.Endpoint,
 	}
 }
