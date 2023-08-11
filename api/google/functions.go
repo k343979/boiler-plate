@@ -17,7 +17,9 @@ func Auth(ctx context.Context) (*http.Response, error) {
 	c := NewClient()
 	// configのセット
 	conf := c.NewConfig("openid", "email", "profile")
+	// ユーザーをGoogle同意ページにリダイレクトし、上記で指定したスコープの許可を求める
 	url := conf.AuthCodeURL("state")
+	// 交換コードを処理してトランスポートを開始
 	tok, err := conf.Exchange(ctx, "authorization-code", oauth2.AccessTypeOffline)
 	if err != nil {
 		return nil, err
